@@ -141,7 +141,7 @@ class PhonemeForcedAligner():
                                 phoneme_duration._replace(yinjie=pypinyin.pinyin(phoneme_duration.yinjie,
                                                                                  style=pypinyin.STYLE_NORMAL)[0][0]),
                                 phoneme_durations)
-        return list(phoneme_durations)
+        return phoneme_durations
 
     def cut_text(self, text):
         # if text not in self.dict_set and len(text) == 1:
@@ -149,7 +149,7 @@ class PhonemeForcedAligner():
         # elif text in self.dict_set:
         #     return [text]
 
-        splited_text = list(jieba.cut(text))
+        splited_text = jieba.cut(text)
         final_words = []
         for word in splited_text:
             if word not in self.dict_set:
@@ -160,13 +160,13 @@ class PhonemeForcedAligner():
         final_words = filter(lambda word: word not in self.puncs_set, final_words)
 
         # print('words: ', list(final_words))
-        final_words = list(filter(lambda word: word not in ('\n', ' '), final_words))
+        final_words = filter(lambda word: word not in ('\n', ' '), final_words)
         # print('words: ', list(final_words))
 
         # for word in final_words:
         #     if word not in self.dict_set:
         #         raise MissingInDictionaryException('this word: {} does no find in dictionary'.format(word))
-        return list(final_words)
+        return final_words
 
     def get_sample_rate(self, wav_path):
         with wave.open(wav_path) as wav:
@@ -216,10 +216,14 @@ class PhonemeForcedAligner():
             mlf_file.write('sp\n')
             words = self.cut_text(text)
             # TODO
-            words = map(lambda word: '\nsp\n'.join(self._parse_word(word)), words)
-            mlf_file.write('\nsp\n'.join(words))
+            words = map(lambda word: '\n'.join(self._parse_word(word)), words)
+            # mlf_file.write('\nsp\n'.join(words))
+            mlf_file.write('\n'.join(words))
             mlf_file.write('\nsp\n.\n')
             mlf_file.seek(0)
+        with open(mlf_path, 'r', encoding='utf-8') as f:
+            print("mlf file: \n{}".format(f.read()))
+
         return mlf_path
 
     def _parse_word(self, word):
