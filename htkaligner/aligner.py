@@ -48,7 +48,6 @@ class PhonemeForcedAligner():
         self.dict_set = self.load_dict(dict_path)
         self.pinyin_dict = {tuple(py[0] for py in pypinyin.pinyin(word, style=pypinyin.STYLE_NORMAL)): word
                             for word in self.dict_set}
-        print(self.pinyin_dict)
         self.puncs_set = self.load_puncs(puncs_path)
         self.dict_file = self.open_temp_file(dict_path, suffix='.dict')
         self.puncs_file = self.open_temp_file(puncs_path, suffix='.puncs')
@@ -82,28 +81,28 @@ class PhonemeForcedAligner():
         wav_path = temp_wav_file.name
         sample_rate = self.get_sample_rate(wav_path)
         if sample_rate not in self.pretrained_sample_rate:
-            temp_wav_file = self.resample(wav_path, self.auto_resample_rate)
+            temp_wav_file = self._resample(wav_path, self.auto_resample_rate)
         else:
             # temp_wav_file = self.open_temp_file(wav_path, suffix='.wav')
             self.auto_resample_rate = sample_rate
 
         # print('wav file shashing: ', get_file_md5(temp_wav_file.name), temp_wav_file.name)
         with TemporaryDirectory() as temp_dir:
-            plp_path = self.hcopy(temp_wav_file, temp_dir)
+            plp_path = self._hcopy(temp_wav_file, temp_dir)
             # print('plp file shashing: ', get_file_md5(plp_path), plp_path)
             mlf_path = self.generate_mlf(text, temp_dir)
             # print('mlf file shashing: ', get_file_md5(mlf_path), mlf_path)
 
-            aligned_path = self.hvite(temp_dir)
+            aligned_path = self._hvite(temp_dir)
             # print('aligned file hashing: ', aligned_path)
-            phoneme_durations = self.gen_res(aligned_path, mlf_path, sys.stdout)
+            phoneme_durations = self._gen_res(aligned_path, mlf_path, sys.stdout)
 
         temp_wav_file.close()
         return phoneme_durations
 
 
 
-    def gen_res(self, aligned_path, infile2, outfile):
+    def _gen_res(self, aligned_path, mlf_path, result_path):
         def start(line, phoneme_durations):
             line = line.split()
             phoneme_durations.append(
@@ -126,7 +125,7 @@ class PhonemeForcedAligner():
         with open(aligned_path, 'r', encoding='utf-8') as f:
             aligned_lines = f.readlines()[2:-1]
 
-        with open(infile2, 'r', encoding='utf-8') as f:
+        with open(mlf_path, 'r', encoding='utf-8') as f:
             mlf_lines = f.readlines()[2:-1]
 
         phoneme_durations = []
@@ -173,14 +172,14 @@ class PhonemeForcedAligner():
         with wave.open(wav_path) as wav:
             return wav.getframerate()
 
-    def resample(self, wav_path, sample_rate):
+    def _resample(self, wav_path, sample_rate):
         # file_suffix = Path(wav_path).suffix
         resampled_wav_file = NamedTemporaryFile(suffix='.wav', mode='w+b', delete=IS_DELETE)
         subprocess.check_call(['sox', wav_path, '-r', str(sample_rate), resampled_wav_file.name])
         resampled_wav_file.seek(0)
         return resampled_wav_file
 
-    def hcopy(self, wav_file, dir):
+    def _hcopy(self, wav_file, dir):
         # plp_file = NamedTemporaryFile(suffix='.plp', delete=IS_DELETE)
         plp_path = Path(dir).joinpath('tmp.plp')
         config_path, _, _ = self.get_config_hmmdefs_macros()
@@ -188,7 +187,7 @@ class PhonemeForcedAligner():
         # plp_file.seek(0)
         return plp_path
 
-    def hvite(self, dir):
+    def _hvite(self, dir):
         config_path, hmmdefs_path, macros_path = self.get_config_hmmdefs_macros()
         aligned_path = './tmp.aligned'
 
@@ -254,12 +253,12 @@ class PhonemeForcedAligner():
                               stderr=open(os.devnull, 'w'))
         return f
 
-    # def write_temp_file(self, iterable_line, suffix):
-    #     temp_file = NamedTemporaryFile(suffix=suffix, mode='w+', encoding='utf-8')
-    #     for line in iterable_line:
-    #         temp_file.write(line + '\n')
-    #     temp_file.seek(0)
-    #     return temp_file
+    def write_temp_file(self, iterable_line, suffix):
+        temp_file = NamedTemporaryFile(suffix=suffix, mode='w+', encoding='utf-8')
+        for line in iterable_line:
+            temp_file.write(line + '\n')
+        temp_file.seek(0)
+        return temp_file
 
     def get_config_hmmdefs_macros(self):
         return (self.default_model_dir / str(self.auto_resample_rate) / 'config',
@@ -269,4 +268,5 @@ class PhonemeForcedAligner():
 
 if __name__ == '__main__':
     aligner = PhonemeForcedAligner()
-    phoneme_durations = aligner.align('春走在路上，看看世界无限宽', './models/11.wav')
+    phoneme_durations = aligner.align('春走在路上，看看世界无限宽', './11.wav')
+    print(phoneme_durations)
