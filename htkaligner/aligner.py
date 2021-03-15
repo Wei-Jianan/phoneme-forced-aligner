@@ -156,13 +156,9 @@ class PhonemeForcedAligner():
                 final_words += list(word)
             else:
                 final_words.append(word)
-        # print('words: ', final_words)
         final_words = filter(lambda word: word not in self.puncs_set, final_words)
 
-        # print('words: ', list(final_words))
         final_words = filter(lambda word: word not in ('\n', ' '), final_words)
-        # print('words: ', list(final_words))
-
         # for word in final_words:
         #     if word not in self.dict_set:
         #         raise MissingInDictionaryException('this word: {} does no find in dictionary'.format(word))
@@ -191,11 +187,6 @@ class PhonemeForcedAligner():
         config_path, hmmdefs_path, macros_path = self.get_config_hmmdefs_macros()
         aligned_path = './tmp.aligned'
 
-        # print(' '.join(['HVite', '-T', str(1), '-a', '-m', '-t', str(10000.0), str(10000.0), str(10000.0),
-        #  '-I', './tmp.mlf', '-H', str(macros_path), '-H', str(hmmdefs_path),
-        #  '-i', aligned_file.name, self.dict_file.name, self.mono_file.name, './tmp.plp']))
-
-        # print(aligned_file.name)
         subprocess.check_call(['HVite', '-T', str(1), '-a', '-m', '-t', str(10000.0), str(10000.0), str(10000.0),
                                '-I', './tmp.mlf', '-H', macros_path, '-H', hmmdefs_path,
                                '-i', aligned_path, self.dict_file.name, self.mono_file.name, './tmp.plp'],
@@ -207,9 +198,6 @@ class PhonemeForcedAligner():
     def generate_mlf(self, text, dir):
         mlf_path = Path(dir).joinpath('tmp.mlf')
         lab_path = '"./tmp.lab"\n'
-        # lab_file = NamedTemporaryFile(suffix='.lab', delete=True)
-        # print('lab_file: ', lab_file.name)
-        # lab_file.close()
         with open(mlf_path, 'w', encoding='utf-8') as mlf_file:
             mlf_file.write('#!MLF!#\n')
             mlf_file.write(lab_path)
