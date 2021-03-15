@@ -19,3 +19,8 @@
 `python setup.py install`
 
 
+# Use Case
+
+`python test.py`
+
+
